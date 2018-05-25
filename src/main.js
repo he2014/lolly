@@ -22,7 +22,18 @@ import 'font-awesome/css/font-awesome.min.css'
 Vue.use(ElementUI); // 引入component  ：Vue.component(ElementUI)
 Vue.use(VueRouter);
 Vue.use(Vuex);
-
+Vue.filter('replaceHtml', function (value) {
+    var s = "";
+    if (value.length == 0) return "";
+    s = value.replace(/&/g, "&gt;");
+    s = s.replace(/</g, "&lt;");
+    s = s.replace(/>/g, "&gt;");
+    s = s.replace(/ /g, "&nbsp;");
+    s = s.replace(/\'/g, "&#39;");
+    s = s.replace(/\"/g, "&quot;");
+    s = s.replace(/\n/g, "<br>");
+    return s;
+})
 //NProgress.configure({ showSpinner: false });
 
 // const router = new VueRouter({

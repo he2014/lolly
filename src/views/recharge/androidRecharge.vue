@@ -11,7 +11,6 @@
         <el-button size="mini" @click.stop="sertchChange" type="primary">查询</el-button>
         <el-button size="mini" @click.stop="newlyBuild" type="primary">新建</el-button>
         <el-button size="mini" @click.stop="refresh" type="primary">刷新</el-button>
-        </el-button>
     </el-col>
     <el-col :span="24" :style="{paddingBottom: '10px',color:'red'}">
     </el-col>
@@ -76,11 +75,39 @@
     <el-button type="primary" @click="dialogVisibl(true)">确 定</el-button>
     </span>
     </el-dialog>
-    <el-dialog title="状态编辑" :visible.sync="editState" width="30%">
-        <el-select v-model="nowState" @change="stateChange" placeholder="请选择">
-            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-            </el-option>
-        </el-select>
+    <el-dialog title="编辑" :visible.sync="editState" width="40%">
+        <el-form  size="small" :model="editdata" status-icon ref="ruleForm3" label-width="100px" class="demo-ruleForm">
+            <el-form-item label="渠道" prop="paymentType">
+                <el-select disabled v-model="editdata.paymentType" placeholder="请选择渠道">
+                    <el-option v-for="item in palyoptions" :key="item.value" :label="item.label" :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="商城代码" prop="paymentProductId">
+                <el-input disabled="" type="text" placeholder="请输入商城代码" v-model="editdata.paymentProductId"></el-input>
+            </el-form-item>
+            <el-form-item label="描述" prop="desc">
+                <el-input type="text" placeholder="请输入描述内容" v-model="editdata.desc"></el-input>
+            </el-form-item>
+            <el-form-item label="金额(美分)" prop="money">
+                <el-input-number :min="1" v-model="editdata.money"></el-input-number>
+            </el-form-item>
+            <el-form-item label="金币" prop="balance">
+                <el-input-number :min="1" v-model="editdata.balance"></el-input-number>
+            </el-form-item>
+            <el-form-item label="返币额度" prop="returnBalance">
+                <el-input-number :min="0" v-model="editdata.returnBalance"></el-input-number>
+            </el-form-item>
+             <el-form-item label="排序" prop="sort">
+                <el-input-number :min="0" v-model="editdata.sort"></el-input-number>
+            </el-form-item>
+            <el-form-item label="状态" prop="status">
+                <el-select v-model="editdata.status" placeholder="请选择状态">
+                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form>
         <span slot="footer" class="dialog-footer">
     <el-button @click="editState = false">取 消</el-button>
     <el-button type="primary" @click="submitEdit">确 定</el-button>
@@ -89,311 +116,309 @@
 </section>
 </template>
 <script>
-import http from '@/api/http'
-import {
-    dateTime
-} from '@/common/js/public'
+import http from "@/api/http";
+import { dateTime } from "@/common/js/public";
 export default {
-    data() {
-        return {
-            list: [],
-            sertchOption: [{
-                label: "GOOGLE_IAB",
-                value: 1
-            }, {
-                label: "IOS_IAP",
-                value: 2,
-            }, {
-                label: 'PAYMENTWALL',
-                value: 3
-            }, {
-                label: 'GPAY',
-                value: 4
-            }],
-            sertchvalue: "",
-            listLoading: false,
-            dialogVisible: false,
-            stateChanged: false,
-            editState: false, //编辑
-            nowState: "",
-            shopId: "",
-            options: [{
-                label: "启用",
-                value: 0
-            }, {
-                label: '禁用',
-                value: 1
-            }],
-            statusoptions: [{
-                label: "启用",
-                value: 0
-            }, {
-                label: '禁用',
-                value: 1
-            }],
-            data: { //新建
-                paymentType: 'GOOGLE_IAB',
-                paymentProductId: '',
-                balance: '',
-                returnBalance: '',
-                money: '',
-                desc: '',
-                status: '启用'
-            },
-            palyoptions: [{ //
-                label: "GOOGLE_IAB",
-                value: 1
-            }, {
-                label: "IOS_IAP",
-                value: 2,
-            }, {
-                label: 'PAYMENTWALL',
-                value: 3
-            }, {
-                label: 'GPAY',
-                value: 4
-            }],
-            addFormRules: {
-                // paymentType: [{
-                //     required: true,
-                //     message: '请选择充值渠道',
-                //     type: 'number',
-                //     trigger: 'blur',
-                //
-                // }],
-                paymentProductId: [{
-                    required: true,
-                    message: '请输入商城代码',
-                    trigger: 'blur'
-                }],
-                desc: [{
-                    required: true,
-                    message: '请输入描述内容',
-                    trigger: 'blur'
-                }],
-                // status: [{
-                //     required: true,
-                //     message: '请选择状态',
-                //     type: 'number',
-                //     trigger: 'blur',
-                //
-                // }],
-
-            }
-        }
-    },
-    mounted() {
-        //do something after creating vue instance
-        this.lists();
-        //this.payType()
-    },
-    methods: {
-        async lists() {
-            this.listLoading = true;
-            await http.get("/back/recharge/listQueryRecharge", {}, (msg) => {
-                let data = msg.dataInfo;
-                //渠道：1代表GOOGLE_IAB;2代表IOS_IAP;3代表PAYMENTWALL;4代表GPAY;
-                data.forEach((item, key) => {
-                    switch (item['paymentType']) {
-                        case 1:
-                            data[key].paymentType = 'GOOGLE_IAB';
-                            break;
-                        case 2:
-                            data[key].paymentType = 'IOS_IAP';
-                            break;
-                        case 3:
-                            data[key].paymentType = 'PAYMENTWALL';
-                            break;
-                        case 4:
-                            data[key].paymentType = 'GPAY';
-                            break;
-                    }
-                    data[key].createTime = dateTime.showtime(new Date(item.createTime));
-                    data[key].status = item.status == 0 ? "启用" : "禁用"
-                })
-                this.list = data;
-                this.listLoading = false;
-                //    console.log(msg)
-            })
-
-
+  data() {
+    return {
+      list: [],
+      sertchOption: [],
+      sertchvalue: "",
+      listLoading: false,
+      dialogVisible: false,
+      stateChanged: false,
+      editState: false, //编辑
+      nowState: "",
+      shopId: "",
+      editdata: {},
+      options: [
+        {
+          label: "启用",
+          value: 0
         },
-        // async payType() {
-        //     await http.get("/back/recharge/listAllPT", {}, (data) => {
-        //         console.log(data)
-        //     })
+        {
+          label: "禁用",
+          value: 1
+        }
+      ],
+      statusoptions: [
+        {
+          label: "启用",
+          value: 0
+        },
+        {
+          label: "禁用",
+          value: 1
+        }
+      ],
+      data: {
+        //新建
+        paymentType: "GOOGLE_IAB",
+        paymentProductId: "",
+        balance: "",
+        returnBalance: "",
+        money: "",
+        desc: "",
+        status: "启用"
+      },
+      palyoptions: [
+        // {
+        //   //
+        //   label: "GOOGLE_IAB",
+        //   value: 1
         // },
-        searchData() {
-            this.listLoading = true;
-            http.get("/back/recharge/listQueryRecharge", {
-                paymentType: this.sertchvalue
-            }, (msg) => {
-                let data = msg.dataInfo;
-                //渠道：1代表GOOGLE_IAB;2代表IOS_IAP;3代表PAYMENTWALL;4代表GPAY;
-                data.forEach((item, key) => {
-                    switch (item['paymentType']) {
-                        case 1:
-                            data[key].paymentType = 'GOOGLE_IAB';
-                            break;
-                        case 2:
-                            data[key].paymentType = 'IOS_IAP';
-                            break;
-                        case 3:
-                            data[key].paymentType = 'PAYMENTWALL';
-                            break;
-                        case 4:
-                            data[key].paymentType = 'GPAY';
-                            break;
-                    }
-                    data[key].createTime = dateTime.showtime(new Date(item.createTime))
-                    data[key].status = item.status == 0 ? "启用" : "禁用"
-                })
-                this.list = data;
-                this.listLoading = false;
-            })
-        },
-        sertchChange() {
-            if (this.sertchvalue) {
-                this.searchData();
-            } else {
-                this.$message({
-                    type: 'warning',
-                    message: '请选择查询条件!',
-                    duration: 1000
-                });
-            }
-        },
-        stateChange(val) {
-            this.stateChanged = true;
-        },
-        editTable(val) { //编辑
-            this.editState = true;
-            this.nowState = val.status;
-            //console.log(val)
-            this.shopId = val.localProductId
-        },
-        submitEdit() {
-            if (this.stateChanged) {
-                http.post("/back/recharge/erp", {
-                    localProductId: this.shopId,
-                    status: this.nowState
-                }, () => {
-                    if (this.sertchvalue) {
-                        this.searchData();
-                    } else {
-                        this.lists();
-                    }
-                    this.$message({
-                        type: 'success',
-                        message: '状态更改成功!',
-                        duration: 1000
-                    });
-                    this.editState = false;
-                })
-            } else {
-                this.$message({
-                    type: 'warning',
-                    message: '状态未改变，不能提交!',
-                    duration: 1000
-                });
-            }
-        },
-        newlyBuild() { //新建
-            this.dialogVisible = true;
-        },
-        dialogVisibl(val) {
-            this.$refs.ruleForm2.validate((valid) => {
-                if (val) {
-                    if (valid) {
-                        let data = this.data;
-                        if (data.paymentType == 'GOOGLE_IAB') {
-                            data.paymentType = 1;
-                        }
-                        if (data.status == '启用') {
-                            data.status = 0;
-                        }
-                        http.post("/back/recharge/crp", data, () => {
-                            this.$message({
-                                type: 'success',
-                                message: '新建成功!',
-                                duration: 1000
-                            });
-                            if (this.sertchvalue) {
-                                this.searchData();
-                            } else {
-                                this.lists()
-                            }
-                            this.dialogVisible = false;
-                            this.$refs.ruleForm2.resetFields();
+        // {
+        //   label: "IOS_IAP",
+        //   value: 2
+        // },
+        // {
+        //   label: "PAYMENTWALL",
+        //   value: 3
+        // },
+        // {
+        //   label: "GPAY",
+        //   value: 4
+        // }
+      ],
+      addFormRules: {
+        // paymentType: [{
+        //     required: true,
+        //     message: '请选择充值渠道',
+        //     type: 'number',
+        //     trigger: 'blur',
+        //
+        // }],
+        paymentProductId: [
+          {
+            required: true,
+            message: "请输入商城代码",
+            trigger: "blur"
+          }
+        ],
+        desc: [
+          {
+            required: true,
+            message: "请输入描述内容",
+            trigger: "blur"
+          }
+        ]
+        // status: [{
+        //     required: true,
+        //     message: '请选择状态',
+        //     type: 'number',
+        //     trigger: 'blur',
+        //
+        // }],
+      }
+    };
+  },
+  mounted() {
+    //do something after creating vue instance
 
-                        })
-                    }
-                } else {
-                    this.$message({
-                        type: 'info',
-                        message: '取消新建!',
-                        duration: 1000
-                    });
-                    this.dialogVisible = false;
-                    // this.$refs.ruleForm2.resetFields();
-                }
-
-
-            })
-
-        },
-        deleteTable(val) { //删除
-            this.$confirm('确认删除吗?', '提示', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-                type: 'warning'
-            }).then(() => { //ajax
-                //  this.listLoading = true;
-                //localProductId
-                http.post('/back/recharge/drp/' + val.localProductId, {}, () => {
-                    this.$message({
-                        type: 'success',
-                        message: '删除成功!',
-                        duration: 1000
-                    });
-                    if (this.sertchvalue) {
-                        this.searchData();
-                    } else {
-                        this.lists()
-                    }
-                })
-            }).catch(() => {
-                this.$message({
-                    type: 'info',
-                    message: '取消删除',
-                    duration: 1000
-                });
-            });
-            console.log(val)
-        },
-        refresh() {
-            http.get('/back/recharge/cc', {}, () => {
-                this.$message({
-                    type: 'success',
-                    message: '刷新成功！',
-                    duration: 1000
-                });
-            })
-        }
-
+    this.getpaymentTypelIST();
+    //this.payType()
+  },
+  methods: {
+    async getpaymentTypelIST() {
+      await this.getRechange_list();
+      this.lists();
     },
-    watch: {
-        dialogVisibl() {
-            this.$refs.ruleForm2.resetFields();
+    async lists() {
+      this.listLoading = true;
+      await http.get("/back/recharge/listQueryRecharge", {}, msg => {
+        let data = msg.dataInfo;
+        //渠道：1代表GOOGLE_IAB;2代表IOS_IAP;3代表PAYMENTWALL;4代表GPAY;
+        data.forEach((item, key) => {
+          if (item["paymentType"]) {
+            data[key].paymentType = this.paymentType[item["paymentType"]];
+          }
+          data[key].createTime = dateTime.showtime(new Date(item.createTime));
+          data[key].status = item.status == 0 ? "启用" : "禁用";
+        });
+        this.list = data;
+        this.listLoading = false;
+        //    console.log(msg)
+      });
+    },
+    getRechange_list() {
+      http.get("/back/recharge/listAllPT", {}, data => {
+        this.paymentType = data.dataInfo;
+        for (let i in this.paymentType) {
+          let item = i;
+          this.palyoptions.push({
+            label: this.paymentType[item],
+            value: item
+          });
+          this.sertchOption.push({
+            label: this.paymentType[item],
+            value: item
+          });
+          //   console.log(Promise);
+          Promise.resolve();
         }
+        // this.getRechange_list();
+      });
+    },
+    // async payType() {
+    //     await http.get("/back/recharge/listAllPT", {}, (data) => {
+    //         console.log(data)
+    //     })
+    // },
+    searchData() {
+      this.listLoading = true;
+      http.get(
+        "/back/recharge/listQueryRecharge",
+        {
+          paymentType: this.sertchvalue
+        },
+        msg => {
+          let data = msg.dataInfo;
+          //渠道：1代表GOOGLE_IAB;2代表IOS_IAP;3代表PAYMENTWALL;4代表GPAY;
+          data.forEach((item, key) => {
+            if (item["paymentType"]) {
+              data[key].paymentType = this.paymentType[item["paymentType"]];
+            }
+            data[key].createTime = dateTime.showtime(new Date(item.createTime));
+            data[key].status = item.status == 0 ? "启用" : "禁用";
+          });
+          this.list = data;
+          this.listLoading = false;
+        }
+      );
+    },
+    sertchChange() {
+      if (this.sertchvalue) {
+        this.searchData();
+      } else {
+        this.$message({
+          type: "warning",
+          message: "请选择查询条件!",
+          duration: 1000
+        });
+      }
+    },
+    stateChange(val) {
+      this.stateChanged = true;
+    },
+    editTable(val) {
+      //编辑
+      this.editState = true;
+      let data = Object.assign({}, val);
+      data.status = data.status == "启用" ? 0 : 1;
+      this.editdata = data;
+      //console.log(val);
+      this.shopId = val.localProductId;
+    },
+    submitEdit() {
+      http.post("/back/recharge/erp", this.editdata, () => {
+        if (this.sertchvalue) {
+          this.searchData();
+        } else {
+          this.lists();
+        }
+        this.$message({
+          type: "success",
+          message: "更改成功!",
+          duration: 1000
+        });
+        this.editState = false;
+      });
+    },
+    newlyBuild() {
+      //新建
+      this.dialogVisible = true;
+    },
+    dialogVisibl(val) {
+      this.$refs.ruleForm2.validate(valid => {
+        if (val) {
+          if (valid) {
+            let data = this.data;
+            if (data.paymentType == "GOOGLE_IAB") {
+              data.paymentType = 1;
+            }
+            if (data.status == "启用") {
+              data.status = 0;
+            }
+            http.post("/back/recharge/crp", data, () => {
+              this.$message({
+                type: "success",
+                message: "新建成功!",
+                duration: 1000
+              });
+              if (this.sertchvalue) {
+                this.searchData();
+              } else {
+                this.lists();
+              }
+              this.dialogVisible = false;
+              this.$refs.ruleForm2.resetFields();
+            });
+          }
+        } else {
+          this.$message({
+            type: "info",
+            message: "取消新建!",
+            duration: 1000
+          });
+          this.dialogVisible = false;
+          // this.$refs.ruleForm2.resetFields();
+        }
+      });
+    },
+    deleteTable(val) {
+      //删除
+      this.$confirm("确认删除吗?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+        .then(() => {
+          //ajax
+          //  this.listLoading = true;
+          //localProductId
+          http.post("/back/recharge/drp/" + val.localProductId, {}, () => {
+            this.$message({
+              type: "success",
+              message: "删除成功!",
+              duration: 1000
+            });
+            if (this.sertchvalue) {
+              this.searchData();
+            } else {
+              this.lists();
+            }
+          });
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "取消删除",
+            duration: 1000
+          });
+        });
+      console.log(val);
+    },
+    refresh() {
+      http.get("/back/recharge/cc", {}, () => {
+        this.$message({
+          type: "success",
+          message: "刷新成功！",
+          duration: 1000
+        });
+      });
     }
-}
+  },
+  watch: {
+    dialogVisibl() {
+      this.$refs.ruleForm2.resetFields();
+    }
+  }
+};
 </script>
 <style lang="scss" scoped>
 .spanLine {
-
-    margin: 10px 0;
-    background-color: #409EFF;
-    height: 1px;
+  margin: 10px 0;
+  background-color: #409eff;
+  height: 1px;
 }
 </style>

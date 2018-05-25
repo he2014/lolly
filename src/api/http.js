@@ -50,7 +50,7 @@ export default {
             url: repeatUrl,
             method: 'post',
             // baseURL:"http://192.168.12.54:8080/",
-            transformRequrest: [function(data) {
+            transformRequrest: [function (data) {
                 // before the request data is sent to the server
                 return data;
             }],
@@ -58,7 +58,7 @@ export default {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            transformResponse: [function(data) {
+            transformResponse: [function (data) {
                 return data;
             }],
             // withCredentials: false,   //  默认false
@@ -70,7 +70,7 @@ export default {
             // contentType: "application/json; charset=utf-8",
             xsrfCookieName: 'XSRF-TOKEN', // default
             xsrfHeaderName: 'X-XSRF-TOKEN', // default
-            validateStatus: function(status) {
+            validateStatus: function (status) {
                 return status >= 0 && status < 500; // 默认的
             },
             // headers: {'contentType': "application/json; charset=utf-8"},
@@ -136,7 +136,7 @@ export default {
                 'X-Requested-With': 'XMLHttpRequest'
                 // 'Content-Type': "application/json;charset=UTF-8"
             },
-            validateStatus: function(status) {
+            validateStatus: function (status) {
                 return status >= 0 && status < 500; // 默认的
             },
             responsetype: 'json' //返回数据类型

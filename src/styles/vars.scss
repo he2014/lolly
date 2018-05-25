@@ -1,1 +1,10 @@
 $color-primary: #20a0ff;//#18c79c
+.monitorCenterVideo video {
+    object-fit: fill;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 10000px !important;
+    max-height: 10000px !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
