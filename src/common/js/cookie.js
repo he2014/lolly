@@ -8,9 +8,9 @@ export default {
         login_name: "login_name"
     },
 
-    'cookieDomain': "http://127.0.0.1:8888",
+    'cookieDomain': "",
 
-    'get': function(cookie_name) {
+    'get': function (cookie_name) {
         if (!cookie_name || cookie_name == '') {
             return null;
         }
@@ -22,7 +22,7 @@ export default {
             return null;
         }
     },
-    'set': function(cookie_name, cookie_val, time) {
+    'set': function (cookie_name, cookie_val, time) {
         time = time || this.duration;
         if (!cookie_name || cookie_name == '') {
             return;
@@ -36,7 +36,7 @@ export default {
         cookie_str += "path=/;domain=" + this.cookieDomain + ";";
         document.cookie = cookie_str;
     },
-    'delete': function(cookie_name) {
+    'delete': function (cookie_name) {
         if (!cookie_name || cookie_name == '') {
             return;
         }
